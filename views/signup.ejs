@@ -1,0 +1,104 @@
+<!-- signup.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up</title>
+  <style>
+   body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            animation: backgroundAnimation 30s infinite linear; 
+        }
+
+        @keyframes backgroundAnimation {
+            0% { background-color: #62c2cc; }
+            20% { background-color: #f78fb3; }
+            40% { background-color: #fad961; }
+            60% { background-color: #7cf2cf; }
+            80% { background-color: #a0d468; }
+            100% { background-color: #62c2cc; }
+        }
+.signup-container {
+  background-color: rgba(255, 255, 255, 0.5); 
+  border-radius: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); 
+  padding: 50px;
+  height: auto;
+  width: 65%; 
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  backdrop-filter: blur(10px); 
+}
+.warning-container {
+      background-color: #ffcccc;
+      color: #cc0000;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      border-radius: 15px;
+      padding: 15px;
+      width: 60%;
+      margin: 0 auto 20px;
+      text-align: center;
+    }
+
+input[type="text"],
+input[type="password"],
+button {
+  width: calc(100% - 22px); 
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #7a6e6e;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 16px;
+  background-color: rgba(204, 200, 218, 0.9);
+}
+
+button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease; 
+}
+
+button:hover {
+  background-color: #45a049;
+}
+li{
+      color: transparent;
+    }
+
+  </style>
+</head>
+<body><center><li>
+<ul>
+  <%  if ( err) { %>
+    <div class="warning-container">
+      It seems you are new here, Please signup first.
+    </div>
+  <% } %>
+</ul>
+<ul>
+  <div class="signup-container">
+    <form action="/user/signup" method="POST">
+      <input type="text" name="name" placeholder="Name" required>
+      <input type="text" name="email" placeholder="Email" required>
+      <input type="password" name="password" placeholder="Password" required>
+      <button type="submit">Sign Up</button>
+    </form>
+  </div>
+</ul>
+</li></center>
+
+  
+
+</body>
+</html>

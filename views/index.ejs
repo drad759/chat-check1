@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>ChatRoom</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      #intro {
+        background: linear-gradient(135deg, #4b0082, #00ced1, #32cd32, #ff1493);
+        color: #fff;
+        height: 80px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        width: 100%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        overflow: hidden;
+      }
+
+      @keyframes gradientBG {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      #intro {
+        animation: gradientBG 10s ease infinite;
+      }
+
+      #intro h1 {
+        font-size: 24px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+      }
+
+      #intro {
+        border-radius: 0 0 20px 20px;
+      }
+      #online-users {
+        position: fixed;
+        top: 80px;
+        right: 10px;
+        z-index: 1001;
+        background-color: #333; /* dark gray background */
+        padding: 5px 10px;
+        border-radius: 10px;
+        font-size: 14px;
+        color: #fff; /* white text color */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        animation: backgroundAnimation 30s infinite linear;
+      }
+
+      @keyframes backgroundAnimation {
+        0% {
+          background-color: #62c2cc;
+        }
+        20% {
+          background-color: #f78fb3;
+        }
+        40% {
+          background-color: #fad961;
+        }
+        60% {
+          background-color: #7cf2cf;
+        }
+        80% {
+          background-color: #a0d468;
+        }
+        100% {
+          background-color: #62c2cc;
+        }
+      }
+
+      form {
+        background: #fff;
+        padding: 10px;
+        position: fixed;
+        bottom: 10px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      form input {
+        background-color: #f2f2f2;
+        border: none;
+        padding: 10px;
+        width: calc(100% - 90px);
+        color: #333;
+        border-radius: 5px;
+      }
+
+      form button {
+        width: 80px;
+        background-color: rgb(15, 134, 198);
+        animation: gradientBG 10s ease infinite;
+        border: none;
+        padding: 10px;
+        font-size: 16px;
+        color: #fff;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+      }
+
+      form button:hover {
+        transform: scale(1.05);
+      }
+
+      #messages {
+        margin-top: 80px;
+        padding: 10px;
+        padding-bottom: 70px;
+        list-style: none;
+        overflow-y: visible;
+      }
+
+      .sent {
+        text-align: right;
+      }
+
+      .sent .message {
+        background-color: #32cd32;
+        margin-left: auto;
+        margin-bottom: 10px;
+        border-radius: 15px;
+      }
+
+      .received .message {
+        background-color: #00ced1;
+        margin-right: auto;
+        margin-bottom: 10px;
+        border-radius: 15px;
+      }
+
+      .joining .message {
+        background-color: #fad961;
+        margin-left: auto;
+        margin-right: auto;
+        display: flex;
+        max-width: 40%;
+        justify-content: center;
+        margin-bottom: 10px;
+        border-radius: 15px;
+      }
+      .left .message {
+        background-color: #c8432e;
+        margin-left: auto;
+        margin-right: auto;
+        display: flex;
+        max-width: 40%;
+        justify-content: center;
+        margin-bottom: 10px;
+        border-radius: 15px;
+      }
+
+      .message {
+        padding: 10px;
+        max-width: 70%;
+      }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script>
+      var name;
+
+      do {
+        name = prompt("Please enter your name");
+
+        // Check if user clicked Cancel or entered an empty name
+        if (name === null || name.trim() === "") {
+          if (
+            confirm(
+              "Name is required. Press OK to try again or Cancel to go back."
+            )
+          ) {
+            continue; // Prompt for name again
+          } else {
+            window.history.back(); // Go back to previous page
+            break;
+          }
+        }
+        if (name == "" || name == null) {
+          window.history.back();
+        }
+      } while (name === null || name.trim() === "");
+
+      if (name !== "null") {
+        var socket = io();
+
+        socket.emit("joining msg", name); //joining name ----->>---->> server
+
+        $(function () {
+          $("form").submit(function (e) {
+            e.preventDefault();
+            var message = $("#m").val().trim();
+            if (message !== "") {
+              //  chat message ---->>---->> server
+              socket.emit("chat message", name + ": " + message);
+
+              //chekc hecl hce ceocjoehc
+              const photoInput = document.getElementById("photo-input");
+
+              photoInput.addEventListener("change", (e) => {
+                const file = photoInput.files[0];
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const fileData = reader.result;
+                  socket.emit("sendPhoto", { name: file.name, data: fileData });
+                };
+                reader.readAsArrayBuffer(file);
+              });
+
+              // displaying the massaeg which is written by the sender (only on his own system).
+              $("#messages").append(
+                '<li class="sent"><div class="message">' +
+                  message +
+                  "</div></li>"
+              );
+
+              $("#m").val(""); // Clear the input field
+            }
+            return false;
+          });
+
+          //user count
+          socket.on("update user count", function (count) {
+            document.getElementById("online-count").innerHTML = count;
+          });
+          //join
+          socket.on("user joined", function (name) {
+            $("#messages").append(
+              '<li class="joining"><div class="message">' +
+                name +
+                " has joined the chat</div></li>"
+            );
+          });
+          //left
+          socket.on("user left", function (name) {
+            $("#messages").append(
+              '<li class="left"><div class="message">' +
+                name +
+                " has left the chat</div></li>"
+            );
+          });
+
+          //checck ckswdhc jsdb sjsdg cisdugw ciwdgc wiuiagdc
+          socket.on("receivePhoto", (filePath) => {
+            const img = document.createElement("img");
+            img.src = `/uploads/${filePath}`;
+            document.getElementById("messages").appendChild(img);
+          });
+
+          // Handle receiving chat messages from the server
+          socket.on("chat message", function (msg) {
+            //adding notification sound
+            var notificationSound =
+              document.getElementById("notificationSound");
+            notificationSound.play();
+
+            $("#messages").append(
+              '<li class="received"><div class="message">' + msg + "</div></li>"
+            );
+          });
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <audio id="notificationSound" src="notification.mp3" preload="auto"></audio>
+    <div id="intro">
+      <h1><center>ChatRoom</center></h1>
+    </div>
+    <div id="online-users">🙋🏻‍♂️: <span id="online-count">0</span></div>
+
+    <ul id="messages"></ul>
+
+    <form action="">
+      <input
+        id="m"
+        placeholder="Enter your message..."
+        autocomplete="on"
+        required
+      />
+      <input type="file" id="photo-input" />
+      <button>Send</button>
+    </form>
+  </body>
+</html>

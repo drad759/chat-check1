@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Links</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            animation: backgroundAnimation 30s infinite linear; 
+        }
+
+        @keyframes backgroundAnimation {
+            0% { background-color: #62c2cc; }
+            20% { background-color: #f78fb3; }
+            40% { background-color: #fad961; }
+            60% { background-color: #7cf2cf; }
+            80% { background-color: #a0d468; }
+            100% { background-color: #62c2cc; }
+        }
+
+        .container {
+            text-align: center;
+            padding: 40px;
+            background-color: rgba(255, 255, 255, 0.5); 
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 40px;
+        }
+
+        .link-container {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .link-container a {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: #007bff;
+            color: #fff;
+            text-decoration: none;
+            width: 20%;
+            border-radius: 10px;
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+
+        .link-container a:hover {
+            background-color: #0056b3;
+        }
+
+        .link-container a::after {
+            content: attr(data-info);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px;
+            background-color: rgba(70, 149, 17, 0.8);
+            color: #fff;
+            font-size: 14px;
+            border-radius: 10px;
+            opacity: 0;
+            margin-bottom: 90%;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            text-align: left;
+            width: 100%;
+        }
+
+        .link-container a:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Choose Your Chat Option</h1>
+        <div class="link-container">
+    <!-- here we are using <<<<<data info>>>>> in css to show the info while hovering or taping  -->
+            <a href="/user/privatechat" data-info="Start or join a private chatroom with room id (required).">Personal Chat</a>
+        </div>
+        <div class="link-container">
+            <a href="/user/chat" data-info="Join a public chat room with no restrictions.">Public Chat</a>
+        </div>
+    </div>
+</body>
+</html>

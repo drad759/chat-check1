@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <style>
+    /* Global reset and basic styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      animation: backgroundAnimation 30s infinite linear; 
+    }
+    @keyframes backgroundAnimation {
+      0% { background-color: #62c2cc; }
+      20% { background-color: #f78fb3; }
+      40% { background-color: #fad961; }
+      60% { background-color: #7cf2cf; }
+      80% { background-color: #a0d468; }
+      100% { background-color: #62c2cc; }
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+      margin: auto;
+      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.5); 
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .profile-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .profile-header h1 {
+      color: #333;
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    .profile-info {
+      margin-bottom: 15px;
+      padding: 10px 0;
+      border-bottom: 1px solid #ddd;
+    }
+    .profile-info label {
+      font-weight: bold;
+      width: 120px;
+      display: inline-block;
+    }
+    .profile-info span {
+      margin-left: 10px;
+      color: #777;
+    }
+    .button-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .button-container a {
+      display: inline-block;
+      padding: 10px 20px;
+      margin: 0 10px;
+      border-radius: 5px;
+      text-align: center;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+    .back-btn {
+      background-color: #007bff;
+      color: #fff;
+    }
+    .back-btn:hover {
+      background-color: #0056b3;
+    }
+    .update-btn {
+      background-color: #28a745;
+      color: #fff;
+    }
+    .update-btn:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="profile-header">
+      <h1>User Profile</h1>
+    </div>
+    <div class="profile-info">
+      <label>Name:</label>
+      <span><%= name %></span>
+    </div>
+    <div class="profile-info">
+      <label>Email:</label>
+      <span><%= email %></span>
+    </div>
+    <!-- Add more profile information as needed -->
+    <div class="button-container">
+      <a href="/user/chatselection" class="back-btn">Back to Chat Selection</a>
+      <a href="/user/update-profile" class="update-btn">Update Profile</a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat App</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      animation: backgroundAnimation 30s infinite linear; 
+    }
+
+    @keyframes backgroundAnimation {
+      0% { background-color: #62c2cc; }
+      20% { background-color: #f78fb3; }
+      40% { background-color: #fad961; }
+      60% { background-color: #7cf2cf; }
+      80% { background-color: #a0d468; }
+      100% { background-color: #62c2cc; }
+    }
+
+    label {
+      margin-right: 10px;
+    }
+
+    input[type="text"] {
+      background-color: #f2f2f2;
+      border: none;
+      padding: 10px;
+      width: calc(100% - 90px);
+      color: #333;
+      border-radius: 5px;
+    }
+
+    button {
+      background-color: rgb(15, 134, 198);
+      border: none;
+      padding: 10px;
+      font-size: 16px;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    #join-form {
+      background: #fff;
+      padding: 10px;
+      position: fixed;
+      height: 8%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      top: 0;
+      width: 100%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      overflow: hidden;
+    }
+
+    #join-form button {
+      width: 30%;
+    }
+
+    #online-users {
+      position: fixed;
+      top: 80px;
+      right: 10px;
+      z-index: 1001;
+      background-color: #333; /* dark gray background */
+      padding: 5px 10px;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #fff; /* white text color */
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    #message-form {
+      background: #fff;
+      padding: 10px;
+      position: fixed;
+      height: 8%;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      z-index: 1;
+    }
+
+    #message-form button {
+      width: 30%;
+    }
+
+    #messages {
+      margin-top: 8%;
+      padding: 10px;
+      padding-bottom: 70px;
+      list-style: none;
+      overflow-y: visible;
+    }
+    
+    .sent {
+      text-align: right;
+    }
+
+    .sent .message {
+      background-color: #32cd32;
+      margin-left: auto;
+      margin-bottom: 10px;
+      border-radius: 15px;
+    }
+
+    .received {
+      text-align: left;
+    }
+
+    .received .message {
+      background-color: #00ced1;
+      margin-right: auto;
+      margin-bottom: 10px;
+      border-radius: 15px;
+    }
+
+    .joining .message {
+      background-color: #fad961; 
+      margin-left: auto;
+      margin-right: auto;
+      display: flex;
+      max-width: 40%;
+      justify-content: center;
+      margin-bottom: 10px;
+      border-radius: 15px;
+    }
+
+    .left .message {
+      background-color: #c8432e; 
+      margin-left: auto;
+      margin-right: auto;
+      display: flex;
+      max-width: 40%;
+      justify-content: center;
+      margin-bottom: 10px;
+      border-radius: 15px;
+    }
+
+    .message {
+      padding: 10px;
+      max-width: 70%;
+    }
+
+  </style>
+</head>
+<body>
+  <form id="join-form">
+    <input type="text" placeholder="Enter room id" id="room-id" name="room-id" />
+    <button type="button" id="prompt-name">Enter Name</button>
+    <button type="submit">Join Room</button>
+  </form>
+
+  <div id="online-users">🙋🏻‍♂️: <span id="online-count">0</span></div>
+
+  <ul id="messages"></ul>
+  <form id="message-form">
+    <input
+      type="text"
+      id="m"
+      placeholder="Enter your message..."
+      autocomplete="on"
+      required
+    />
+    <button type="submit">Send</button>
+  </form>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    var pname = null;
+    var socket = io();
+
+    // Prompt for name when clicking on "Enter Name"
+    $("#prompt-name").click(function () {
+      pname = prompt("Please enter your name");
+
+      // Checking if pname is null (user clicked cancel) or empty
+      if (pname === null || pname.trim() === "") {
+        alert("Name is required to join the room. Please enter your name.");
+        return;
+      }
+    });
+
+    // Join room form submission
+    $("#join-form").submit(function (e) {
+      e.preventDefault();
+      var roomId = $("#room-id").val().trim();
+
+      // Check if pname has been set (name entered)
+      if (!pname) {
+        alert("Name is required to join the room. Please enter your name.");
+        return;
+      }
+
+      if (roomId !== "") {
+        socket.emit("join room", { roomId: roomId, name: pname });
+      } else {
+        alert("Room ID is required. Please enter a room ID.");
+      }
+    });
+
+    // Send message form submission
+    $("#message-form").submit(function (e) {
+      e.preventDefault();
+      var message = $("#m").val().trim();
+      if (message !== "") {
+        socket.emit("private message", {
+          roomId: $("#room-id").val().trim(),
+          msg: pname + ": " + message,
+        });
+        $("#messages").append(
+          '<li class="sent"><div class="message">' + "You: " + message + "</div></li>"
+        );
+        $("#m").val("");
+      } else {
+        alert("Message cannot be empty. Please enter a message.");
+      }
+    });
+
+    // Update online user count
+    socket.on("update count", function (count) {
+      document.getElementById("online-count").textContent = count;
+    });
+
+    // Notify joining user
+    socket.on("join room", function (name, roomId) {
+      $("#messages").append(
+        '<li class="joining"><div class="message">' + name + " has joined the chat</div></li>"
+      );
+    });
+
+    // Notify leaving user
+    socket.on("leave room", function (name) {
+      $("#messages").append(
+        '<li class="left"><div class="message">' + name + " has left the chat</div></li>"
+      );
+    });
+
+    // Receive a message
+    socket.on("private message", function (msg) {
+      $("#messages").append(
+        $('<li class="received"><div class="message">' + msg + "</div></li>")
+      );
+    });
+  </script>
+</body>
+</html>

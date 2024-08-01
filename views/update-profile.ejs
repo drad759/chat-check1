@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update Profile</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <style>
+    /* Global reset and basic styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      animation: backgroundAnimation 30s infinite linear; 
+    }
+    @keyframes backgroundAnimation {
+      0% { background-color: #62c2cc; }
+      20% { background-color: #f78fb3; }
+      40% { background-color: #fad961; }
+      60% { background-color: #7cf2cf; }
+      80% { background-color: #a0d468; }
+      100% { background-color: #62c2cc; }
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+      margin: auto;
+      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.5); 
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .profile-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .profile-header h1 {
+      color: #333;
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+      padding: 10px 0;
+      border-bottom: 1px solid #ddd;
+    }
+    .form-group label {
+      font-weight: bold;
+      width: 150px;
+      display: inline-block;
+    }
+    .form-group input {
+      width: calc(100% - 160px);
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .form-group input[type="password"] {
+      width: calc(100% - 160px);
+    }
+    .form-group.error input {
+      border-color: red;
+    }
+    .form-group.error span {
+      color: red;
+    }
+    .button-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .button-container button, .button-container a {
+      display: inline-block;
+      padding: 10px 20px;
+      margin: 0 10px;
+      border-radius: 5px;
+      text-align: center;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+    .update-btn {
+      background-color: #28a745;
+      color: #fff;
+    }
+    .update-btn:hover {
+      background-color: #218838;
+    }
+    .back-btn {
+      background-color: #007bff;
+      color: #fff;
+    }
+    .back-btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="profile-header">
+      <h1>Update Profile</h1>
+    </div>
+    <form action="/user/update-profile" method="POST">
+      <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" value="<%= name %>" required>
+      </div>
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" value="<%= email %>" required>
+      </div>
+      <div class="form-group">
+        <label for="currentPassword">Current Password:</label>
+        <input type="password" id="currentPassword" name="currentPassword" required>
+      </div>
+      <div class="form-group">
+        <label for="newPassword">New Password:</label>
+        <input type="password" id="newPassword" name="newPassword">
+      </div>
+      <div class="form-group">
+        <label for="confirmNewPassword">Confirm New Password:</label>
+        <input type="password" id="confirmNewPassword" name="confirmNewPassword">
+      </div>
+      <% if (error) { %>
+        <div class="form-group error">
+          <span><%= error %></span>
+        </div>
+      <% } %>
+      <div class="button-container">
+        <button type="submit" class="update-btn">Update Profile</button>
+        <a href="/user/profile" class="back-btn">Back to Profile</a>
+      </div>
+    </form>
+  </div>
+</body>
+</html>
