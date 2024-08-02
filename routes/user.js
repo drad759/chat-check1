@@ -275,6 +275,11 @@ router.post('/update-profile', async (req, res) => {
   }
 });
 
+router.get('/videocall/:room', (req, res) => {
+  res.render('videocall', { RoomId: req.params.room });
+});
+
+
 
 
 
