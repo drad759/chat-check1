@@ -9,8 +9,13 @@ const port = 3000;
 const mongoose = require("mongoose");
 const userRoute = require('./routes/user');
 const User = require("./models/user");
+const Message = require('./models/message');
 const bodyParser = require('body-parser');
-const io =socketio(server)
+const io = socketio(server);
+const { ExpressPeerServer } = require('peer');
+const peer = ExpressPeerServer(server, {
+  debug: true
+});
 const fs = require('fs');
 
 
@@ -20,7 +25,7 @@ mongoose.connect('mongodb+srv://dradsir:dradsir@cluster0.xdgmgyh.mongodb.net/?re
 app.set("view engine", "ejs");
 app.set("views", path.resolve("./views"));
 
-
+app.use('/peerjs', peer);
 app.use(express.json());
 
 app.use(session({
@@ -41,7 +46,21 @@ let onlineUsers = 0;
 let connectedUsers = {};
 //start connection
 io.on('connection', (socket) => {
-  console.log('new user connected');
+  console.log('New user connected:', socket.id);
+
+    socket.on('newUser', (id, room) => {
+        socket.join(room);
+        socket.to(room).broadcast.emit('userJoined', id);
+        socket.on('disconnect', () => {
+            console.log('User disconnected:', socket.id);
+            socket.to(room).broadcast.emit('userDisconnect', id);
+        });
+    });
+
+
+
+
+
 
 
 
@@ -49,28 +68,64 @@ io.on('connection', (socket) => {
 
 
 // Handle chat messages with email 
-function getRoomName(user1, user2) {
-  const [first, second] = [user1, user2].sort(); // making unique room names by sorting both emails
-  return `${first}-${second}`;
-}
+const rooms = {}; // { roomName: Set(userEmails) }
 
-socket.on('join room', (userEmail, contactEmail) => {
-  const roomName = getRoomName(userEmail, contactEmail);
-  console.log(roomName);
-  socket.join(roomName);
-  console.log(`User ${userEmail} joined room: ${roomName}`);
+  function getRoomName(user1, user2) {
+    const [first, second] = [user1, user2].sort(); // Ensure consistent room naming
+    return `${first}-${second}`;
+  }
+
+  // Join a room
+  socket.on('room', async (userEmail, contactEmail) => {
+    const roomName = getRoomName(userEmail, contactEmail);
+
+    if (!rooms[roomName]) {
+        rooms[roomName] = new Set();
+    }
+
+    rooms[roomName].add(userEmail);
+    socket.join(roomName);
+    console.log(`User ${userEmail} joined room: ${roomName}`);
+
+    // Fetch and send stored messages for the user
+    const storedMessages = await Message.find({ roomName, contactEmail: userEmail });
+    storedMessages.forEach(msg => {
+        socket.emit('chat message', { userEmail: msg.userEmail, message: msg.message });
+    });
 });
 
-socket.on('chat message', (data) => {
-  const { userEmail, contactEmail, message } = data;
-  const roomName = getRoomName(userEmail, contactEmail);
-  socket.broadcast.to(roomName).emit('chat message', { message });
- 
+// Handle sending messages
+socket.on('chat message', async (data) => {
+    const { userEmail, contactEmail, message } = data;
+    const roomName = getRoomName(userEmail, contactEmail);
+
+    if (rooms[roomName] && rooms[roomName].has(userEmail)) {
+        // Store the message in the database
+        await new Message({ userEmail, contactEmail, message, roomName }).save();
+
+        // Broadcast the message to the room
+        socket.to(roomName).emit('chat message', { userEmail, message });
+    } else {
+        console.log(`User ${userEmail} is not in room ${roomName}`);
+    }
 });
 
+// Handle disconnection
 socket.on('disconnect', () => {
-  console.log('user disconnected');
+    console.log('User disconnected');
+
+    // Clean up room data
+    for (const roomName in rooms) {
+        rooms[roomName].delete(socket.request.userEmail);
+
+        if (rooms[roomName].size === 0) {
+            delete rooms[roomName];
+        }
+    }
 });
+
+
+
 
 
 
