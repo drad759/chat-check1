@@ -209,21 +209,24 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script>
-        var socket = io();
-
         $(function () {
-            // Emit event for joining a specific chat room
-            socket.emit('join room', '<%= contactEmail %>');
+            var socket = io(); // Ensure this is only created once
 
+            const userEmail = '<%= userEmail %>'; 
+            const contactEmail = '<%= contactEmail %>';
+            socket.emit('join room', userEmail, contactEmail);
+
+            // Handle form submission
             $("form").submit(function (e) {
                 e.preventDefault();
                 var message = $("#m").val().trim();
                 if (message !== "") {
-                    // Send chat message
                     socket.emit('chat message', {
-                        contactEmail: '<%= contactEmail %>',
+                        userEmail: userEmail,
+                        contactEmail: contactEmail,
                         message: message
                     });
+                    console.log('Sent message:', message);
 
                     $("#messages").append(
                         '<li class="sent"><div class="message">' +
@@ -235,7 +238,9 @@
                 return false;
             });
 
-            socket.on('chat message', function (data) {
+            //using socket.off  Ensure the event listener is only attached once
+            socket.off('chat message').on('chat message', function (data) {
+                console.log('Received message:', data.message);
                 $("#messages").append(
                     '<li class="received"><div class="message">' +
                         data.message +
@@ -266,12 +271,17 @@
             socket.on('receivePhoto', (filePath) => {
                 const img = document.createElement("img");
                 img.src = `/uploads/${filePath}`;
-                img.style.maxWidth = "100%"; /* Responsive image */
+                img.style.maxWidth = "100%";
                 img.style.borderRadius = "10px";
                 img.style.margin = "10px 0";
                 document.getElementById("messages").appendChild(img);
             });
         });
+
+        function getRoomName(user1, user2) {
+            const [first, second] = [user1, user2].sort();
+            return `${first}-${second}`;
+        }
     </script>
 </body>
 </html>
