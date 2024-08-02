@@ -82,17 +82,12 @@ router.get("/chat",async(req, res) => {
 
 router.get('/chat/:contactEmail', (req, res) => {
   const contactEmail = req.params.contactEmail;
-  console.log("Reached here");
-  console.log('Contact Email:', contactEmail); // Log the contactEmail to debug
-  res.render('chat', { contactEmail });
+  const {email: userEmail} = req.session.user;
+  if(!userEmail){
+    return res.redirect('/user/login');
+  }
+  res.render('chat', { contactEmail,userEmail });
 });
-
-
-
-router.get('/onetoone',(req,res)=>{
-  return res.render('onetoone');
-})
-
 
 
 //logout 
