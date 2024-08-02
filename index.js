@@ -14,7 +14,7 @@ const io =socketio(server)
 const fs = require('fs');
 
 
-mongoose.connect('mongodb+srv://dradsir:dradsir@cluster0.xdgmgyh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+mongoose.connect('mongodb://127.0.0.1:27017/auth')
 .then(()=> console.log("MongoDb connected"));
 
 app.set("view engine", "ejs");
@@ -49,16 +49,23 @@ io.on('connection', (socket) => {
 
 
 // Handle chat messages with email 
-socket.on('join room', (contactEmail) => {
-  socket.join(contactEmail);//user email + contact email
-  console.log(`User joined room: ${contactEmail}`);
+function getRoomName(user1, user2) {
+  const [first, second] = [user1, user2].sort(); // making unique room names by sorting both emails
+  return `${first}-${second}`;
+}
+
+socket.on('join room', (userEmail, contactEmail) => {
+  const roomName = getRoomName(userEmail, contactEmail);
+  console.log(roomName);
+  socket.join(roomName);
+  console.log(`User ${userEmail} joined room: ${roomName}`);
 });
 
 socket.on('chat message', (data) => {
-  const { contactEmail, message } = data;
-  socket.broadcast.to(contactEmail).emit('chat message', { message });
-  // Notify the sender about the new message 
-  io.to(socket.id).emit('new message', { contactEmail });
+  const { userEmail, contactEmail, message } = data;
+  const roomName = getRoomName(userEmail, contactEmail);
+  socket.broadcast.to(roomName).emit('chat message', { message });
+ 
 });
 
 socket.on('disconnect', () => {
