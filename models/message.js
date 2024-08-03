@@ -1,11 +1,10 @@
 const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
-    userEmail: { type: String, required: true },
-    contactEmail: { type: String, required: true },
-    message: { type: String, required: true },
-    timestamp: { type: Date, default: Date.now },
-    roomName: { type: String, required: true }
+  roomId: String,
+  sender: String,
+  text: String,
+  timestamp: { type: Date, default: Date.now }
 });
 
 const Message = mongoose.model('Message', messageSchema);
