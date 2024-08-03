@@ -13,16 +13,6 @@
             grid-template-columns: repeat(auto-fill, 300px);
             grid-auto-rows: 300px;
         }
-        #footer {
-            width: 100%;
-            height: 50px;
-            background-color: white;
-            display: flex;
-            justify-content: center;
-            flex: 1;
-            border-bottom: 1px solid grey;
-            margin-top: 10px;
-        }
         button {
             height: 30px;
             width: 80px;
@@ -45,12 +35,17 @@
     <script src="/socket.io/socket.io.js" defer></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const roomID = prompt('Enter room ID:');
+            // Room ID from the server-side
+            const roomID = '<%= RoomId %>';
+    
             if (!roomID) {
-                alert('Room ID is required');
-                return;
+                roomID = prompt('Enter room ID:');
+                if (!roomID) {
+                    alert('Room ID is required');
+                    return;
+                }
             }
-
+    
             const socket = io('/');
             const peer = new Peer();
             let myVideoStream;
@@ -59,7 +54,7 @@
             const myvideo = document.createElement('video');
             myvideo.muted = true;
             const peerConnections = {};
-
+    
             function addVideo(video, stream) {
                 video.srcObject = stream;
                 video.addEventListener('loadedmetadata', () => {
@@ -67,12 +62,12 @@
                 });
                 videoGrid.append(video);
             }
-
+    
             navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .then(stream => {
                     myVideoStream = stream;
                     addVideo(myvideo, stream);
-
+    
                     peer.on('call', call => {
                         call.answer(stream);
                         const vid = document.createElement('video');
@@ -94,17 +89,17 @@
                     console.error('Media error:', err);
                     alert('Media error: ' + err.message);
                 });
-
+    
             peer.on('open', id => {
                 myId = id;
                 socket.emit('newUser', id, roomID);
             });
-
+    
             peer.on('error', err => {
                 console.error('Peer error:', err);
                 alert('Peer error: ' + err.message);
             });
-
+    
             socket.on('userJoined', id => {
                 console.log("New user joined: " + id);
                 const call = peer.call(id, myVideoStream);
@@ -122,7 +117,7 @@
                 });
                 peerConnections[id] = call;
             });
-
+    
             socket.on('userDisconnect', id => {
                 if (peerConnections[id]) {
                     peerConnections[id].close();
@@ -130,6 +125,7 @@
             });
         });
     </script>
+    
 </head>
 <body>
     <div id="videoDiv"></div>
