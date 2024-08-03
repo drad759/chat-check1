@@ -1,203 +1,198 @@
-const express = require("express");
-const User = require("../models/user");
+const express = require('express');
+const User = require('../models/user');
 const Contact = require('../models/contacts');
 const router = express.Router();
 const bodyParser = require('body-parser');
 
+// Middleware
 router.use(bodyParser.urlencoded({ extended: true }));
 
-
-
-
-//signup page directly open on clicking join
+// Signup page
 router.get('/', (req, res) => {
-  res.render('signup', {err:false});// we put err as false to open it first time without warning
+  res.render('signup', { err: false });
 });
-router.post("/signup", async(req,res)=>{
-    const { name, email, password } = req.body; //taking input from user
-    const existingUser = await User.findOne({ email });// checking if user already exist
-   
+
+// Handle Signup
+router.post('/signup', async (req, res) => {
+  const { name, email, password } = req.body;
+  try {
+    const existingUser = await User.findOne({ email });
+
     if (existingUser) {
-      return res.redirect(`/user/login?userExists=true&email=${(email)}`); // if user exist redirecting to login page with warning
-  }
-    else{ //otherwise creating a new user in database
-      await User.create({
-        name,
-        email,
-        password,
-      });
-      return res.redirect("/user/login");
+      return res.redirect(`/user/login?userExists=true&email=${email}`);
     }
-});
 
-
-
-//login page
-router.get('/login',(req,res)=>{
-  const{userExists, email} = req.query;
-  res.render('login',{userExists, email,error: false});
-})
-router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email }); //checking if user is in database with email
-
-  if(!user){ // if the email doesn't exist we send the user to signup page for signup with (err as true, to show the warning )
-    return res.render("signup",{
-      err: true,
-    });
-  } 
-  else if ( user.password !== password) { //if user exist but input password doesn't match
-      return res.render("login", {
-          error: true,
-      });
-  } else {
-    req.session.user = { name: user.name, email: user.email };
-      return res.redirect('/user/chatselection'); //if everything goes well send the user for selecting his chat mode
+    await User.create({ name, email, password });
+    return res.redirect('/user/login');
+  } catch (error) {
+    console.error('Error signing up:', error);
+    res.redirect('/user/login');
   }
 });
 
-//this will redirect to chat selection
-router.get('/chatselection',async(req,res)=>{
-  return res.render('chatselect');
-})
+// Login page
+router.get('/login', (req, res) => {
+  const { userExists, email } = req.query;
+  res.render('login', { userExists, email, error: false });
+});
 
-//this will redirect to private chatroom
-router.get('/privatechat',async(req,res)=>{
+// Handle Login
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.render('signup', { err: true });
+    } else if (user.password !== password) {
+      return res.render('login', { error: true });
+    } else {
+      req.session.user = { name: user.name, email: user.email };
+      return res.redirect('/user/chatselection');
+    }
+  } catch (error) {
+    console.error('Error logging in:', error);
+    res.redirect('/user/login');
+  }
+});
+
+// Chat Selection Page
+router.get('/chatselection', (req, res) => {
+  res.render('chatselect');
+});
+
+// Private Chatroom Page
+router.get('/privatechat', (req, res) => {
   res.render('privatechat');
 });
 
-//this will redirect to public chatroom in 
-router.get("/chat",async(req, res) => {
-  return res.render('index');
- });
+// Public Chatroom Page
+router.get('/chat', (req, res) => {
+  res.render('index');
+});
 
- router.get('/profile', (req, res) => {
-  const { name, email } = req.session.user || {}; // Use fallback in case session.user is undefined
+// Profile Page
+router.get('/profile', (req, res) => {
+  const { name, email } = req.session.user || {};
   if (!name || !email) {
     return res.redirect('/user/login');
   }
   res.render('profile', { name, email });
 });
 
-
+// Chat with Contact
 router.get('/chat/:contactEmail', (req, res) => {
   const contactEmail = req.params.contactEmail;
-  const {email: userEmail} = req.session.user;
-  if(!userEmail){
+  const { email: userEmail } = req.session.user;
+
+  if (!userEmail) {
     return res.redirect('/user/login');
   }
-  res.render('chat', { contactEmail,userEmail });
+  res.render('chat', { contactEmail, userEmail });
 });
 
-
-//logout 
-// Logout route
+// Logout
 router.get('/logout', (req, res) => {
   req.session.destroy(err => {
     if (err) {
       console.error('Error destroying session:', err);
-      return res.redirect('/user/profile'); // Redirect to profile if there's an error
+      return res.redirect('/user/profile');
     }
-    res.redirect('/user/login'); // Redirect to login page after successful logout
+    res.redirect('/user/login');
   });
 });
 
-
-
-
-
-// Assuming you have the routes correctly defined
+// Contacts
 router.get('/contacts', async (req, res) => {
   try {
-      const currentUser = req.session.user;
-      if (!currentUser) {
-          return res.redirect('/user/login');
-      }
+    const currentUser = req.session.user;
+    if (!currentUser) {
+      return res.redirect('/user/login');
+    }
 
-      const allUsers = await User.find({ email: { $ne: currentUser.email } });
-      const user = await User.findOne({ email: currentUser.email });
+    const allUsers = await User.find({ email: { $ne: currentUser.email } });
+    const user = await User.findOne({ email: currentUser.email });
 
-      res.render('contacts', {
-          users: allUsers,
-          contactList: user.contacts
-      });
+    res.render('contacts', {
+      users: allUsers,
+      contactList: user.contacts,
+      currentUser
+    });
   } catch (err) {
-      console.error(err);
-      res.status(500).send('Server Error');
+    console.error(err);
+    res.status(500).send('Server Error');
   }
 });
 
 router.post('/contacts/add', async (req, res) => {
   try {
-      const { email } = req.session.user;
-      const { contactEmail } = req.body;
+    const { email } = req.session.user;
+    const { contactEmail } = req.body;
 
-      if (!contactEmail) {
-          return res.status(400).json({ message: 'Contact email is required' });
-      }
+    if (!contactEmail) {
+      return res.status(400).json({ message: 'Contact email is required' });
+    }
 
-      const user = await User.findOne({ email });
-      if (!user) {
-          return res.status(400).json({ message: 'User not found' });
-      }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
 
-      const existingContact = user.contacts.find(contact => contact.contactEmail === contactEmail);
-      if (existingContact) {
-          return res.status(400).json({ message: 'Contact already added' });
-      }
+    const existingContact = user.contacts.find(contact => contact.contactEmail === contactEmail);
+    if (existingContact) {
+      return res.status(400).json({ message: 'Contact already added' });
+    }
 
-      const contact = await User.findOne({ email: contactEmail });
-      if (!contact) {
-          return res.status(400).json({ message: 'Contact not found' });
-      }
+    const contact = await User.findOne({ email: contactEmail });
+    if (!contact) {
+      return res.status(400).json({ message: 'Contact not found' });
+    }
 
-      user.contacts.push({
-          contactEmail: contactEmail,
-          contactName: contact.name,
-          profilePicture: contact.profilePicture
-      });
-      await user.save();
+    user.contacts.push({
+      contactEmail: contactEmail,
+      contactName: contact.name,
+      profilePicture: contact.profilePicture
+    });
+    await user.save();
 
-      res.json({ message: 'Contact added successfully' });
+    res.json({ message: 'Contact added successfully' });
   } catch (err) {
-      console.error('Server Error:', err);
-      res.status(500).json({ message: 'Server Error' });
+    console.error('Server Error:', err);
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 
 router.post('/contacts/remove', async (req, res) => {
   try {
-      const { email } = req.session.user;
-      const { contactEmail } = req.body;
+    const { email } = req.session.user;
+    const { contactEmail } = req.body;
 
-      if (!contactEmail) {
-          return res.status(400).json({ message: 'Contact email is required' });
-      }
+    if (!contactEmail) {
+      return res.status(400).json({ message: 'Contact email is required' });
+    }
 
-      const user = await User.findOne({ email });
-      if (!user) {
-          return res.status(400).json({ message: 'User not found' });
-      }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
 
-      user.contacts = user.contacts.filter(contact => contact.contactEmail !== contactEmail);
-      await user.save();
+    user.contacts = user.contacts.filter(contact => contact.contactEmail !== contactEmail);
+    await user.save();
 
-      const contact = await User.findOne({ email: contactEmail });
-      if (contact) {
-          contact.contacts = contact.contacts.filter(contact => contact.contactEmail !== email);
-          await contact.save();
-      }
+    const contact = await User.findOne({ email: contactEmail });
+    if (contact) {
+      contact.contacts = contact.contacts.filter(contact => contact.contactEmail !== email);
+      await contact.save();
+    }
 
-      res.json({ message: 'Contact removed successfully' });
+    res.json({ message: 'Contact removed successfully' });
   } catch (err) {
-      console.error('Server Error:', err);
-      res.status(500).json({ message: 'Server Error' });
+    console.error('Server Error:', err);
+    res.status(500).json({ message: 'Server Error' });
   }
 });
 
-
-// Route to handle user search
-// Route to handle user search
+// Search Users
 router.get('/contacts/search', async (req, res) => {
   try {
     const { query } = req.query;
@@ -207,7 +202,6 @@ router.get('/contacts/search', async (req, res) => {
       return res.redirect('/user/login');
     }
 
-    // Perform case-insensitive search for users
     const searchResults = await User.find({
       email: { $ne: currentUser.email },
       $or: [
@@ -218,7 +212,6 @@ router.get('/contacts/search', async (req, res) => {
 
     const user = await User.findOne({ email: currentUser.email });
 
-    // Return the search results as JSON
     res.json({
       users: searchResults,
       contactList: user.contacts
@@ -229,42 +222,38 @@ router.get('/contacts/search', async (req, res) => {
   }
 });
 
-
+// Update Profile Page
 router.get('/update-profile', (req, res) => {
-  const { name, email } = req.session.user; 
+  const { name, email } = req.session.user || {};
   res.render('update-profile', { name, email, error: null });
 });
 
+// Handle Update Profile
 router.post('/update-profile', async (req, res) => {
   const { name, email, currentPassword, newPassword, confirmNewPassword } = req.body;
   const { email: currentEmail } = req.session.user;
 
   try {
-    // Fetch the user from the database
     const user = await User.findOne({ email: currentEmail });
     if (!user) {
       return res.render('update-profile', { name, email, error: 'User not found' });
     }
 
-    // Validate current password
     if (user.password !== currentPassword) {
       return res.render('update-profile', { name, email, error: 'Current password is incorrect' });
     }
 
-    // Validate new password
     if (newPassword !== confirmNewPassword) {
       return res.render('update-profile', { name, email, error: 'New passwords do not match' });
     }
 
-    // Update user profile
     user.name = name || user.name;
     user.email = email || user.email;
     if (newPassword) {
       user.password = newPassword;
     }
-    await user.save();
 
-    // Update session with new email
+    await user.save();
     req.session.user.name = user.name;
     req.session.user.email = user.email;
 
@@ -275,12 +264,58 @@ router.post('/update-profile', async (req, res) => {
   }
 });
 
-router.get('/videocall/:room', (req, res) => {
-  res.render('videocall', { RoomId: req.params.room });
+// Video Call Page
+router.get('/videocall', (req, res) => {
+  const roomId = req.query.room;
+  res.render('videocall', { RoomId: roomId });
 });
 
+// ChatGPT Endpoint
+router.post('/chatgpt', async (req, res) => {
+  try {
+    const userMessage = req.body.message;
 
+    const response = await openai.completions.create({
+      model: 'gpt-3.5-turbo',
+      prompt: userMessage,
+      max_tokens: 150
+    });
 
+    const chatResponse = response.choices[0].text.trim();
+    res.json({ response: chatResponse });
+  } catch (error) {
+    console.error('Error communicating with OpenAI:', error);
+    res.status(500).json({ error: 'Something went wrong' });
+  }
+});
 
+// Create Room ID Function
+const rooms = {};
+function createRoomId(user1, user2) {
+  const combinedEmails = `${user1}_${user2}`;
+  const sortedCombined = combinedEmails.split('').sort().join('');
+  return sortedCombined;
+}
 
-module.exports = router; //exporting the router
+// Chat Room Page
+router.get('/chat1/:roomId?', (req, res) => {
+  const { name, email } = req.session.user || {};
+  const { roomId } = req.params;
+  const { user1Email, user1Name, user2Name, user2Email } = req.query;
+
+  if (user1Email && user2Email) {
+    const generatedRoomId = createRoomId(user1Email, user2Email);
+
+    if (!rooms[generatedRoomId]) {
+      rooms[generatedRoomId] = { users: [user1Email, user2Email] };
+    }
+
+    res.render('chat1', { roomId: generatedRoomId, user1Name, user2Name, name });
+  } else if (roomId && rooms[roomId]) {
+    res.render('chat1', { roomId, user1Name, user2Name, name });
+  } else {
+    res.status(400).send('Invalid room ID or missing parameters');
+  }
+});
+
+module.exports = router;
