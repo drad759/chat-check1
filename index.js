@@ -43,7 +43,10 @@ app.get("/", async(req,res)=>{
 
 
 let onlineUsers = 0;
+
 let connectedUsers = {};
+
+let roomUserCounts = {};
 //start connection
 io.on('connection', (socket) => {
   console.log('New user connected:', socket.id);
@@ -68,61 +71,7 @@ io.on('connection', (socket) => {
 
 
 // Handle chat messages with email 
-const rooms = {}; // { roomName: Set(userEmails) }
 
-  function getRoomName(user1, user2) {
-    const [first, second] = [user1, user2].sort(); // Ensure consistent room naming
-    return `${first}-${second}`;
-  }
-
-  // Join a room
-  socket.on('room', async (userEmail, contactEmail) => {
-    const roomName = getRoomName(userEmail, contactEmail);
-
-    if (!rooms[roomName]) {
-        rooms[roomName] = new Set();
-    }
-
-    rooms[roomName].add(userEmail);
-    socket.join(roomName);
-    console.log(`User ${userEmail} joined room: ${roomName}`);
-
-    // Fetch and send stored messages for the user
-    const storedMessages = await Message.find({ roomName, contactEmail: userEmail });
-    storedMessages.forEach(msg => {
-        socket.emit('chat message', { userEmail: msg.userEmail, message: msg.message });
-    });
-});
-
-// Handle sending messages
-socket.on('chat message', async (data) => {
-    const { userEmail, contactEmail, message } = data;
-    const roomName = getRoomName(userEmail, contactEmail);
-
-    if (rooms[roomName] && rooms[roomName].has(userEmail)) {
-        // Store the message in the database
-        await new Message({ userEmail, contactEmail, message, roomName }).save();
-
-        // Broadcast the message to the room
-        socket.to(roomName).emit('chat message', { userEmail, message });
-    } else {
-        console.log(`User ${userEmail} is not in room ${roomName}`);
-    }
-});
-
-// Handle disconnection
-socket.on('disconnect', () => {
-    console.log('User disconnected');
-
-    // Clean up room data
-    for (const roomName in rooms) {
-        rooms[roomName].delete(socket.request.userEmail);
-
-        if (rooms[roomName].size === 0) {
-            delete rooms[roomName];
-        }
-    }
-});
 
 
 
@@ -180,27 +129,69 @@ socket.on('sendPhoto', (file) => {
 
 
   //here we make our user to join the room by asking room id and name from prompt 
-  socket.on('join room', ({ roomId, name }) => {
-    socket.join(roomId); 
-    io.of('/').in(roomId).clients((error, clients) => { //here we are storing all available clients infoin a specific room  in clients object
-      if (error) throw error;
-      const onlineCount = clients.length; // here we are taking the lenght of the clients object to know the user counts in a specific roomm 
-      console.log(onlineCount + " are in " + roomId);
-      io.to(roomId).emit("update count", onlineCount); //sending the number of connected users in a specific room 
-    });
+  socket.on('join room', async ({ roomId, name }) => {
+    socket.join(roomId);
+    if (!roomUserCounts[roomId]) {
+      roomUserCounts[roomId] = 0;
+    }
+    roomUserCounts[roomId]++;
+    io.to(roomId).emit("update count", roomUserCounts[roomId]);
+    console.log(name + ' has joined the room ' + roomId);
   
-    console.log(name + 'as joined the chat');
-    socket.uname = name;  //again storing the user name in socket object
-    socket.room = roomId;  //storing the room id also in socket object
+
+
+  
+    try {
+      // Retrieve previous messages from the database
+      const messages = await Message.find({ roomId });
+  
+      // Send previous messages to the user
+      socket.emit('previous messages', messages.map(msg => ({
+        sender: msg.sender,
+        text: msg.text
+      })));
+    } catch (error) {
+      console.error('Error retrieving messages:', error);
+      socket.emit('error', 'Failed to retrieve previous messages');
+    }
+  
+    // io.of('/').in(roomId).clients((error, clients) => {
+    //   if (error) {
+    //     console.error('Error retrieving clients:', error);
+    //     return;
+    //   }
+    //   const onlineCount = clients.length;
+    //   console.log(onlineCount + " are in " + roomId);
+    //   io.to(roomId).emit("update count", private);
+    // });
+  
+
+
+    
+    console.log(name + ' has joined the chat');
+    socket.uname = name;  // Storing the user name
+    socket.room = roomId;  // Storing the room id
     io.to(roomId).emit('join room', name); // Emitting to everyone in the room
   });
 
  
 
 
-socket.on('private message', ({ roomId, msg }) => {
-    socket.broadcast.to(roomId).emit('private message', msg); // sending the massage to all the sockets in a specific room except the one who initiated it
-});
+  socket.on('private message', async ({ roomId, msg }) => {
+    // Save the message to the database
+    const [sender, text] = msg.split(': ');
+    const message = new Message({
+      roomId,
+      sender,
+      text
+    });
+  
+    await message.save();
+  
+    // Broadcast the message to all clients in the room
+    socket.broadcast.to(roomId).emit('private message', msg);
+  });
+  
 
 
 
@@ -226,13 +217,19 @@ socket.on('disconnect', () => {
   }
 
   if (roomId) {
+   
     console.log(uname + 'user disconnected from room '+ roomId);
     socket.to(roomId).emit('leave room', uname);
-    io.of('/').in(roomId).clients((error, clients) => {
-      if (error) throw error;
-      const onlineCount = clients.length;
-      socket.to(roomId).emit("update count", onlineCount);
-    });
+    if (roomId) {
+      if (roomUserCounts[roomId]) {
+        roomUserCounts[roomId]--;
+        if (roomUserCounts[roomId] <= 0) {
+          delete roomUserCounts[roomId];
+        } else {
+          io.to(roomId).emit("update count", roomUserCounts[roomId]);
+        }
+      }
+    }
   }
 
   if (connectedUsers[name]) {
