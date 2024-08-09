@@ -7,12 +7,11 @@
     <link rel="stylesheet" href="/styles.css">
     <script src="/scripts.js" defer></script>
     <style>
-        /* General Styles */
-        /* General Styles */
+       /* General Styles */
 body {
     font-family: 'Arial', sans-serif;
     color: #333;
-    background-color: #eaeaea; /* Light gray for a softer background */
+    background-color: #eaeaea;
     margin: 0;
     padding: 0;
     display: flex;
@@ -21,7 +20,7 @@ body {
 }
 
 .header {
-    background: linear-gradient(135deg, #1d72b8, #007bff); /* Gradient blue */
+    background: linear-gradient(135deg, #1d72b8, #007bff);
     color: #fff;
     padding: 20px;
     text-align: center;
@@ -38,6 +37,7 @@ body {
     flex: 1;
     padding: 20px;
     max-width: 1200px;
+    min-width: 1000px;
     margin: 20px auto;
     background: #fff;
     border-radius: 15px;
@@ -63,6 +63,7 @@ body {
     font-size: 1rem;
     transition: border-color 0.3s, box-shadow 0.3s;
     outline: none;
+    box-sizing: border-box; /* Ensure padding is included in width */
 }
 
 .search-input:focus {
@@ -93,7 +94,7 @@ body {
 .section-title {
     font-size: 2.2rem;
     margin-bottom: 20px;
-    color: #1d72b8; /* Consistent blue */
+    color: #1d72b8;
     font-weight: 700;
     border-bottom: 3px solid #1d72b8;
     padding-bottom: 12px;
@@ -102,6 +103,7 @@ body {
 .contacts-list, .my-contacts-list {
     list-style: none;
     padding: 0;
+    margin: 0;
 }
 
 .contact-item {
@@ -109,16 +111,17 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 20px;
-    background: #ffffff;
+    background: #fff;
     border-radius: 15px;
     margin-bottom: 20px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     transition: box-shadow 0.3s, transform 0.3s;
+    box-sizing: border-box; /* Ensure padding and border are included in width */
 }
 
 .contact-item:hover {
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-    transform: translateY(-5px); /* More pronounced lift effect */
+    transform: translateY(-5px);
 }
 
 .profile-pic {
@@ -127,12 +130,12 @@ body {
     border-radius: 50%;
     margin-right: 20px;
     object-fit: cover;
-    border: 3px solid #1d72b8; /* Blue border */
+    border: 3px solid #1d72b8;
 }
 
 .username {
     flex-grow: 1;
-    font-size: 1.3rem; /* Slightly larger */
+    font-size: 1.3rem;
     font-weight: 600;
 }
 
@@ -143,7 +146,7 @@ body {
 
 .add-contact, .remove-contact, .info-button {
     border: none;
-    padding: 12px 24px;
+    padding: 12px 24px 12px;
     border-radius: 30px;
     font-size: 0.9rem;
     cursor: pointer;
@@ -190,18 +193,16 @@ body {
 }
 
 .footer {
-    background: linear-gradient(135deg, #1d72b8, #007bff); /* Gradient blue */
+    background: linear-gradient(135deg, #1d72b8, #007bff);
     color: #fff;
     text-align: center;
     padding: 15px;
-    position: relative;
-    bottom: 0;
     width: 100%;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
     margin-top: 30px;
+    box-sizing: border-box; /* Ensure padding and border are included in width */
 }
 
-/* Modal Styles */
 .modal {
     display: none;
     position: fixed;
@@ -211,19 +212,19 @@ body {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0, 0, 0, 0.5); /* Darker background */
+    background-color: rgba(0, 0, 0, 0.4);
     padding-top: 60px;
 }
 
 .modal-content {
-    background-color: #ffffff;
+    background-color: #fff;
     margin: 5% auto;
     padding: 20px;
     border: 1px solid #ddd;
     width: 80%;
     max-width: 500px;
-    border-radius: 15px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
 }
 
 .close {
@@ -234,50 +235,11 @@ body {
     cursor: pointer;
 }
 
-.close:hover,
-.close:focus {
-    color: #1d72b8; /* Consistent blue */
+.close:hover, .close:focus {
+    color: #007bff;
     text-decoration: none;
 }
 
-        /* Modal Styles */
-        .modal {
-            display: none; /* Hidden by default */
-            position: fixed;
-            z-index: 1; /* Sit on top */
-            left: 0;
-            top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
-            padding-top: 60px;
-        }
-
-        .modal-content {
-            background-color: #ffffff;
-            margin: 5% auto; /* Centered */
-            padding: 20px;
-            border: 1px solid #ddd;
-            width: 80%; /* Could be more or less, depending on screen size */
-            max-width: 500px;
-            border-radius: 12px;
-            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
-        }
-
-        .close {
-            color: #333;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover,
-        .close:focus {
-            color: #007bff;
-            text-decoration: none;
-        }
     </style>
 </head>
 <body>
@@ -288,7 +250,7 @@ body {
     <main class="main-content">
         <section class="search-section">
             <form id="searchForm" class="search-form" action="/contacts/search" method="GET">
-                <input type="text" id="searchInput" name="query" class="search-input" placeholder="Search users..." autocomplete="off" required>
+                <input type="text" id="searchInput" name="query" class="search-input" placeholder="Search users..." autocomplete="on" required>
                 <button type="submit" class="search-button">Search</button>
             </form>
         </section>
@@ -300,9 +262,12 @@ body {
                 <% if (users && users.length > 0) { %>
                     <% users.forEach(function(user) { %>
                         <li class="contact-item">
+
+                            <img src="/images/email/<%= user.email %>" class="profile-pic" alt="<%= user.name %> Profile Picture">
                             <a href="/user/chat1/<%= user.roomId %>?user1Email=<%= user.email %>&user1Name=<%= user.name %>&user2Email=<%= currentUser.email %>&user2Name=<%= currentUser.name %>" style="text-decoration: none; color: inherit;">
-                                <img src="<%= user.profilePicture || '/default-profile.png' %>" alt="<%= user.name %> Profile Picture" class="profile-pic">
+                                
                                 <span class="username"><%= user.name %></span>
+                              
                             </a>
                             <div class="button-group">
                                 <button class="add-contact" data-user-email="<%= user.email %>">Add Contact</button>
@@ -323,10 +288,12 @@ body {
                 <% if (contactList && contactList.length > 0) { %>
                     <% contactList.forEach(function(contact) { %>
                         <li class="contact-item">
+                            <img src="/images/email/<%= contact.contactEmail %>" alt="<%= contact.contactName %> Profile Picture" class="profile-pic">
                             <a href="/user/chat1/<%= contact.roomId %>?user1Email=<%= contact.contactEmail %>&user1Name=<%= contact.contactName %>&user2Email=<%= currentUser.email %>&user2Name=<%= currentUser.name %>" style="text-decoration: none; color: inherit;">
-                                <img src="<%= contact.profilePicture || '/default-profile.png' %>" alt="<%= contact.contactName %> Profile Picture" class="profile-pic">
+                              
                                 <span class="username"><%= contact.contactName %></span>
                             </a>
+                            
                             <div class="button-group">
                                 <button class="remove-contact" data-contact-email="<%= contact.contactEmail %>" data-contact-name="<%= contact.contactName %>">Delete</button>
                                 <button class="info-button" data-user-name="<%= contact.contactName %>" data-user-email="<%= contact.contactEmail %>">Info</button>
@@ -356,134 +323,108 @@ body {
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const contactsList = document.getElementById('contactsList');
-            const myContactsList = document.getElementById('myContactsList');
-            const infoModal = document.getElementById('infoModal');
-            const modalUserName = document.getElementById('modalUserName');
-            const modalUserEmail = document.getElementById('modalUserEmail');
-            const closeModal = infoModal.querySelector('.close');
+       document.addEventListener('DOMContentLoaded', function() {
+    const contactsList = document.getElementById('contactsList');
+    const myContactsList = document.getElementById('myContactsList');
+    const infoModal = document.getElementById('infoModal');
+    const modalUserName = document.getElementById('modalUserName');
+    const modalUserEmail = document.getElementById('modalUserEmail');
+    const closeModal = infoModal.querySelector('.close');
 
-            // Function to handle Info button click
-            function handleInfoButtonClick(event) {
-                const button = event.target;
-                const userName = button.getAttribute('data-user-name');
-                const userEmail = button.getAttribute('data-user-email');
+    function handleInfoButtonClick(event) {
+        const button = event.target;
+        if (button.classList.contains('info-button')) {
+            const userName = button.getAttribute('data-user-name');
+            const userEmail = button.getAttribute('data-user-email');
+            modalUserName.textContent = `Name: ${userName}`;
+            modalUserEmail.textContent = `Email: ${userEmail}`;
+            infoModal.style.display = "block";
+        }
+    }
 
-                modalUserName.textContent = `Name: ${userName}`;
-                modalUserEmail.textContent = `Email: ${userEmail}`;
-
-                infoModal.style.display = "block";
-            }
-
-            // Attach event listeners to Info buttons
-            function attachInfoButtonListeners(container) {
-                container.querySelectorAll('.info-button').forEach(button => {
-                    button.addEventListener('click', handleInfoButtonClick);
+    async function handleAddContactClick(event) {
+        if (event.target.classList.contains('add-contact')) {
+            const contactEmail = event.target.getAttribute('data-user-email');
+            try {
+                const response = await fetch('/user/contacts/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contactEmail })
                 });
-            }
-
-            // Attach listeners to existing Info buttons
-            attachInfoButtonListeners(contactsList);
-            attachInfoButtonListeners(myContactsList);
-
-            // Update Info buttons in dynamically added content
-            const searchForm = document.getElementById('searchForm');
-            const searchInput = document.getElementById('searchInput');
-            searchForm.addEventListener('submit', async function(event) {
-                event.preventDefault(); // Prevent default form submission
-
-                const query = searchInput.value;
-
-                try {
-                    const response = await fetch(`/user/contacts/search?query=${encodeURIComponent(query)}`);
-                    const data = await response.json();
-
-                    // Update the contacts list with the search results
-                    contactsList.innerHTML = data.users.map(user => `
-                        <li class="contact-item">
-                            <img src="${user.profilePicture || '/default-profile.png'}" alt="${user.name} Profile Picture" class="profile-pic">
-                            <span class="username">${user.name}</span>
-                            <button class="add-contact" data-user-email="${user.email}">Add Contact</button>
-                            <button class="info-button" data-user-name="${user.name}" data-user-email="${user.email}">Info</button>
-                        </li>
-                    `).join('');
-
-                    // Reattach event listeners to dynamically added Info buttons
-                    attachInfoButtonListeners(contactsList);
-                } catch (error) {
-                    console.error('Error searching for users:', error);
-                    alert('Failed to search users.');
+                const result = await response.json();
+                if (response.ok) {
+                    alert(result.message);
+                    window.location.reload();
+                } else {
+                    alert(result.message);
                 }
-            });
+            } catch (error) {
+                console.error('Error adding contact:', error);
+                alert('Failed to add contact.');
+            }
+        }
+    }
 
-            // Handle add and remove contact actions
-            document.querySelectorAll('.add-contact').forEach(button => {
-                button.addEventListener('click', async function() {
-                    const contactEmail = this.getAttribute('data-user-email');
-
-                    try {
-                        const response = await fetch('/user/contacts/add', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ contactEmail })
-                        });
-
-                        const result = await response.json();
-                        if (response.ok) {
-                            alert(result.message);
-                            window.location.reload();
-                        } else {
-                            alert(result.message);
-                        }
-                    } catch (error) {
-                        console.error('Error adding contact:', error);
-                        alert('Failed to add contact.');
-                    }
+    async function handleRemoveContactClick(event) {
+        if (event.target.classList.contains('remove-contact')) {
+            const contactEmail = event.target.getAttribute('data-contact-email');
+            try {
+                const response = await fetch('/user/contacts/remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contactEmail })
                 });
-            });
-
-            document.querySelectorAll('.remove-contact').forEach(button => {
-                button.addEventListener('click', async function() {
-                    const contactEmail = this.getAttribute('data-contact-email');
-
-                    try {
-                        const response = await fetch('/user/contacts/remove', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ contactEmail })
-                        });
-
-                        const result = await response.json();
-                        if (response.ok) {
-                            alert(result.message);
-                            window.location.reload();
-                        } else {
-                            alert(result.message);
-                        }
-                    } catch (error) {
-                        console.error('Error removing contact:', error);
-                        alert('Failed to remove contact.');
-                    }
-                });
-            });
-
-            // Handle close modal
-            closeModal.addEventListener('click', function() {
-                infoModal.style.display = "none";
-            });
-
-            // Close modal if clicked outside of it
-            window.addEventListener('click', function(event) {
-                if (event.target === infoModal) {
-                    infoModal.style.display = "none";
+                const result = await response.json();
+                if (response.ok) {
+                    alert(result.message);
+                    window.location.reload();
+                } else {
+                    alert(result.message);
                 }
-            });
-        });
+            } catch (error) {
+                console.error('Error removing contact:', error);
+                alert('Failed to remove contact.');
+            }
+        }
+    }
+
+    contactsList.addEventListener('click', handleAddContactClick);
+    contactsList.addEventListener('click', handleInfoButtonClick);
+    myContactsList.addEventListener('click', handleRemoveContactClick);
+    myContactsList.addEventListener('click', handleInfoButtonClick);
+
+    document.getElementById('searchForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const query = document.getElementById('searchInput').value;
+        try {
+            const response = await fetch(`/user/contacts/search?query=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            contactsList.innerHTML = data.users.map(user => `
+                <li class="contact-item">
+                    <img src="/images/email/${user.email}" alt="${user.name} Profile Picture" class="profile-pic">
+                    <span class="username">${user.name}</span>
+                    <button class="add-contact" data-user-email="${user.email}">Add Contact</button>
+                    <button class="info-button" data-user-name="${user.name}" data-user-email="${user.email}">Info</button>
+                </li>
+            `).join('');
+        } catch (error) {
+            console.error('Error searching for users:', error);
+            alert('Failed to search users.');
+        }
+    });
+
+    closeModal.addEventListener('click', function() {
+        infoModal.style.display = "none";
+    });
+
+    window.addEventListener('click', function(event) {
+        if (event.target === infoModal) {
+            infoModal.style.display = "none";
+        }
+    });
+});
+
+
     </script>
 </body>
 </html>
