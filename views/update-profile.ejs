@@ -100,6 +100,13 @@
     .back-btn:hover {
       background-color: #0056b3;
     }
+    .upload-pic-btn {
+      background-color: #17a2b8;
+      color: #fff;
+    }
+    .upload-pic-btn:hover {
+      background-color: #138496;
+    }
   </style>
 </head>
 <body>
@@ -136,8 +143,17 @@
       <div class="button-container">
         <button type="submit" class="update-btn">Update Profile</button>
         <a href="/user/profile" class="back-btn">Back to Profile</a>
+        <a href="#" id="uploadPicLink" class="upload-pic-btn">Upload Profile Picture</a>
       </div>
     </form>
   </div>
+  <script>
+    // Update the 'Upload Profile Picture' link with the email query parameter
+    document.addEventListener('DOMContentLoaded', function() {
+      const email = document.getElementById('email').value;
+      const uploadPicLink = document.getElementById('uploadPicLink');
+      uploadPicLink.href = `/upload-pic?email=${encodeURIComponent(email)}`;
+    });
+  </script>
 </body>
 </html>
