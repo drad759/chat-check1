@@ -3,9 +3,13 @@ const mongoose = require('mongoose');
 const messageSchema = new mongoose.Schema({
   roomId: String,
   sender: String,
+  receiver: String,
+  senderEmail: String,
   text: String,
+  read: { type: Boolean, default: false },
   timestamp: { type: Date, default: Date.now }
 });
+
 
 const Message = mongoose.model('Message', messageSchema);
 
