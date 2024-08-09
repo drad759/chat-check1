@@ -1,8 +1,16 @@
 const express = require('express');
+const mongoose = require('mongoose');
+const multer = require('multer');
+const multerMemoryStorage = multer.memoryStorage();
+
+const stream = require('stream');
 const User = require('../models/user');
-const Contact = require('../models/contacts');
+
+
 const router = express.Router();
 const bodyParser = require('body-parser');
+
+
 
 // Middleware
 router.use(bodyParser.urlencoded({ extended: true }));
@@ -109,11 +117,12 @@ router.get('/contacts', async (req, res) => {
     if (!currentUser) {
       return res.redirect('/user/login');
     }
-
+    
     const allUsers = await User.find({ email: { $ne: currentUser.email } });
     const user = await User.findOne({ email: currentUser.email });
 
     res.render('contacts', {
+     
       users: allUsers,
       contactList: user.contacts,
       currentUser
@@ -222,8 +231,18 @@ router.get('/contacts/search', async (req, res) => {
   }
 });
 
+// Example: Mark messages as read when user opens the chatroom
+router.post('/contacts/markAsRead', async (req, res) => {
+  const { userEmail } = req.body;
+  await Message.updateMany({ receiverEmail: userEmail, status: 'unread' }, { $set: { status: 'read' } });
+  res.send({ message: 'Messages marked as read' });
+});
+
+
 // Update Profile Page
 router.get('/update-profile', (req, res) => {
+ 
+
   const { name, email } = req.session.user || {};
   res.render('update-profile', { name, email, error: null });
 });
@@ -302,6 +321,7 @@ router.get('/chat1/:roomId?', (req, res) => {
   const { name, email } = req.session.user || {};
   const { roomId } = req.params;
   const { user1Email, user1Name, user2Name, user2Email } = req.query;
+  const receiverEmail = user1Email;
 
   if (user1Email && user2Email) {
     const generatedRoomId = createRoomId(user1Email, user2Email);
@@ -310,12 +330,59 @@ router.get('/chat1/:roomId?', (req, res) => {
       rooms[generatedRoomId] = { users: [user1Email, user2Email] };
     }
 
-    res.render('chat1', { roomId: generatedRoomId, user1Name, user2Name, name });
+    res.render('chat1', { roomId: generatedRoomId, user1Name, user2Name, name, receiverEmail,user2Email });
   } else if (roomId && rooms[roomId]) {
-    res.render('chat1', { roomId, user1Name, user2Name, name });
+    res.render('chat1', { roomId, user1Name, user2Name, name, receiverEmail,user2Email });
   } else {
     res.status(400).send('Invalid room ID or missing parameters');
   }
 });
+
+
+router.post('/messages/read', async (req, res) => {
+  const { roomId, receiver } = req.body;
+
+  try {
+    await Message.updateMany({ roomId, receiver, read: false }, { read: true });
+    res.status(200).json({ message: 'Messages marked as read' });
+  } catch (error) {
+    console.error('Error marking messages as read:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+
+// Upload image route
+const upload = multer({ storage: multerMemoryStorage });
+router.post('/upload', upload.single('image'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  try {
+    const bucket = getBucket(); // Use getBucket to get the initialized bucket
+    const uploadStream = bucket.openUploadStream(req.file.originalname);
+    const readableStream = new stream.PassThrough();
+    readableStream.end(req.file.buffer);
+    readableStream.pipe(uploadStream);
+
+    uploadStream.on('finish', () => {
+      res.json({ fileId: uploadStream.id, filename: req.file.originalname });
+    });
+
+    uploadStream.on('error', (err) => {
+      console.error('Upload error:', err);
+      res.status(500).json({ error: err.message });
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+
+
 
 module.exports = router;
