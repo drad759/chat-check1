@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Upload and Management</title>
+  <style>
+    .image-container {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #ddd;
+      margin-top: 20px;
+    }
+    .image-container img {
+      width: 100%;
+      height: auto;
+    }
+    .navigation-buttons {
+      margin-top: 20px;
+    }
+    .image-id-container {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Upload and Manage Image</h1>
+  
+  <!-- Upload Form -->
+  <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+    <input type="file" name="image" />
+    <input type="hidden" id="emailField" name="email" />
+    <input type="submit" value="Upload" />
+  </form>
+  
+  <!-- Image Display -->
+  <div class="image-container" id="imageContainer">
+    <img id="image" src="" alt="Uploaded Image" />
+  </div>
+
+  <div class="image-id-container">
+    <span id="imageId">Image ID: </span>
+  </div>
+
+  <!-- Navigation Buttons -->
+  <div class="navigation-buttons">
+    <button id="prevButton">Previous</button>
+    <button id="nextButton">Next</button>
+  </div>
+
+  <!-- Delete Form -->
+  <h2>Delete Image</h2>
+  <form id="deleteForm">
+    <input type="text" id="imageIdInput" placeholder="Enter Image ID" required />
+    <button type="submit">Delete Image</button>
+  </form>
+
+  <script>
+    let images = [];
+    let currentIndex = 0;
+
+    // Function to get query parameters from URL
+    function getQueryParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        email: params.get('email')
+      };
+    }
+
+    // Set the email field value from URL
+    function setEmailField() {
+      const queryParams = getQueryParams();
+      const emailField = document.getElementById('emailField');
+      if (queryParams.email) {
+        emailField.value = queryParams.email;
+      } else {
+        console.error('Email query parameter is missing');
+      }
+    }
+
+    // Handle form submission for image upload
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData();
+      formData.append('image', document.querySelector('input[type="file"]').files[0]);
+      formData.append('email', document.getElementById('emailField').value); // Add the email to form data
+
+      try {
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        
+        if (data.filename) {
+          const imageUrl = `/images/${data.filename}`;
+          document.getElementById('image').src = imageUrl;
+          document.getElementById('imageId').textContent = `Image ID: ${data.fileId}`;
+          fetchAllImages(); // Refresh the image list after upload
+        } else {
+          console.error('Upload failed:', data.error);
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    });
+
+    // Fetch all images from the server
+    async function fetchAllImages() {
+      try {
+        const response = await fetch('/images');
+        images = await response.json();
+        displayImage();
+      } catch (err) {
+        console.error('Error fetching images:', err);
+      }
+    }
+
+    // Display image at the current index
+    function displayImage() {
+      if (images.length > 0) {
+        const image = images[currentIndex];
+        document.getElementById('image').src = `/images/${image.filename}`;
+        document.getElementById('imageId').textContent = `Image ID: ${image.id}`;
+      }
+    }
+
+    // Previous button event listener
+    document.getElementById('prevButton').addEventListener('click', () => {
+      if (images.length > 0) {
+        currentIndex = (currentIndex > 0) ? currentIndex - 1 : images.length - 1;
+        displayImage();
+      }
+    });
+
+    // Next button event listener
+    document.getElementById('nextButton').addEventListener('click', () => {
+      if (images.length > 0) {
+        currentIndex = (currentIndex < images.length - 1) ? currentIndex + 1 : 0;
+        displayImage();
+      }
+    });
+
+    // Delete form event listener
+    document.getElementById('deleteForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const imageId = document.getElementById('imageIdInput').value;
+
+      try {
+        const response = await fetch(`/images/id/${imageId}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          alert('Image deleted successfully');
+          fetchAllImages(); // Refresh the image list after deletion
+        } else {
+          const data = await response.json();
+          alert('Deletion failed: ' + data.error);
+        }
+      } catch (err) {
+        console.error('Error:', err);
+      }
+    });
+
+    // Initialize by setting the email field and fetching images
+    setEmailField();
+    fetchAllImages();
+  </script>
+</body>
+</html>
