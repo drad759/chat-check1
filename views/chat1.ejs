@@ -212,6 +212,9 @@
   <script>
     var pname = '<%= name %>';
     var roomId = '<%= roomId %>';
+    var receiverEmail = '<%= receiverEmail %>';
+    var senderEmail = '<%=user2Email%>'
+     // Extracted receiver email from EJS
     var socket = io();
 
     $(document).ready(function () {
@@ -236,12 +239,15 @@
     });
 
     $("#message-form").submit(function (e) {
-      e.preventDefault();
+      e.preventDefault(); 
       var message = $("#m").val().trim();
       if (message !== "") {
         socket.emit("private message", {
           roomId: roomId,
-          msg: pname + ": " + message,
+          sender: pname,
+          receiver: receiverEmail,
+           senderEmail,
+          text: message,
         });
         $("#messages").append(
           '<li class="sent"><div class="message">' + "You: " + message + "</div></li>"
@@ -278,8 +284,9 @@
     });
 
     socket.on("private message", function (msg) {
+      var className = msg.sender === pname ? 'sent' : 'received';
       $("#messages").append(
-        $('<li class="received"><div class="message">' + msg + "</div></li>")
+        $('<li class="' + className + '"><div class="message">' + msg.sender + ": " + msg.text + "</div></li>")
       );
     });
   </script>
