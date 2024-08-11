@@ -34,100 +34,128 @@
     <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js" defer></script>
     <script src="/socket.io/socket.io.js" defer></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Room ID from the server-side
-            const roomID = '<%= RoomId %>';
-    
-            if (!roomID) {
-                roomID = prompt('Enter room ID:');
-                if (!roomID) {
-                    alert('Room ID is required');
-                    return;
-                }
-            }
-    
-            const socket = io('/');
-            const peer = new Peer();
-            let myVideoStream;
-            let myId;
-            const videoGrid = document.getElementById('videoDiv');
-            const myvideo = document.createElement('video');
-            myvideo.muted = true;
-            const peerConnections = {};
-    
-            function addVideo(video, stream) {
-                video.srcObject = stream;
-                video.addEventListener('loadedmetadata', () => {
-                    video.play();
+
+document.addEventListener('DOMContentLoaded', () => {
+    const roomID = '<%= RoomId %>';
+
+    if (!roomID) {
+        roomID = prompt('Enter room ID:');
+        if (!roomID) {
+            alert('Room ID is required');
+            return;
+        }
+    }
+
+    const socket = io('/');
+    const peer = new Peer();
+    let myVideoStream;
+    let myId;
+    const videoGrid = document.getElementById('videoDiv');
+    const myVideo = document.createElement('video');
+    myVideo.muted = true;
+    myVideo.id = 'myVideo';
+    const peerConnections = {};
+
+    function addVideo(video, stream) {
+        video.srcObject = stream;
+        video.addEventListener('loadedmetadata', () => {
+            video.play();
+        });
+        videoGrid.append(video);
+    }
+
+    function switchVideo(video) {
+        const currentVideo = document.querySelector('video.active');
+        if (currentVideo) {
+            currentVideo.classList.remove('active');
+        }
+        video.classList.add('active');
+    }
+
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then(stream => {
+            myVideoStream = stream;
+            addVideo(myVideo, stream);
+
+            peer.on('call', call => {
+                call.answer(stream);
+                const incomingVideo = document.createElement('video');
+                incomingVideo.id = call.peer;
+                incomingVideo.addEventListener('click', () => switchVideo(incomingVideo));
+                call.on('stream', userStream => {
+                    addVideo(incomingVideo, userStream);
                 });
-                videoGrid.append(video);
-            }
-    
-            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-                .then(stream => {
-                    myVideoStream = stream;
-                    addVideo(myvideo, stream);
-    
-                    peer.on('call', call => {
-                        call.answer(stream);
-                        const vid = document.createElement('video');
-                        call.on('stream', userStream => {
-                            addVideo(vid, userStream);
-                        });
-                        call.on('error', err => {
-                            console.error('Call error:', err);
-                            alert('Call error: ' + err.message);
-                        });
-                        call.on('close', () => {
-                            console.log('Call closed');
-                            vid.remove();
-                        });
-                        peerConnections[call.peer] = call;
-                    });
-                })
-                .catch(err => {
-                    console.error('Media error:', err);
-                    alert('Media error: ' + err.message);
-                });
-    
-            peer.on('open', id => {
-                myId = id;
-                socket.emit('newUser', id, roomID);
-            });
-    
-            peer.on('error', err => {
-                console.error('Peer error:', err);
-                alert('Peer error: ' + err.message);
-            });
-    
-            socket.on('userJoined', id => {
-                console.log("New user joined: " + id);
-                const call = peer.call(id, myVideoStream);
-                const vid = document.createElement('video');
                 call.on('error', err => {
                     console.error('Call error:', err);
                     alert('Call error: ' + err.message);
                 });
-                call.on('stream', userStream => {
-                    addVideo(vid, userStream);
-                });
                 call.on('close', () => {
-                    vid.remove();
-                    console.log("User disconnected: " + id);
+                    incomingVideo.remove();
                 });
-                peerConnections[id] = call;
+                peerConnections[call.peer] = call;
             });
-    
-            socket.on('userDisconnect', id => {
-                if (peerConnections[id]) {
-                    peerConnections[id].close();
-                }
-            });
+        })
+        .catch(err => {
+            console.error('Media error:', err);
+            alert('Media error: ' + err.message);
         });
+
+    peer.on('open', id => {
+        myId = id;
+        socket.emit('newUser', id, roomID);
+    });
+
+    peer.on('error', err => {
+        console.error('Peer error:', err);
+        alert('Peer error: ' + err.message);
+    });
+
+    socket.on('userJoined', id => {
+        console.log("New user joined: " + id);
+        const call = peer.call(id, myVideoStream);
+        const incomingVideo = document.createElement('video');
+        incomingVideo.id = id;
+        incomingVideo.addEventListener('click', () => switchVideo(incomingVideo));
+        call.on('error', err => {
+            console.error('Call error:', err);
+            alert('Call error: ' + err.message);
+        });
+        call.on('stream', userStream => {
+            addVideo(incomingVideo, userStream);
+        });
+        call.on('close', () => {
+            incomingVideo.remove();
+            console.log("User disconnected: " + id);
+        });
+        peerConnections[id] = call;
+    });
+
+    socket.on('userDisconnect', id => {
+        if (peerConnections[id]) {
+            peerConnections[id].close();
+        }
+    });
+
+    document.getElementById('controls').addEventListener('click', (event) => {
+        if (event.target.id === 'mute') {
+            myVideoStream.getAudioTracks().forEach(track => track.enabled = !track.enabled);
+            event.target.textContent = myVideoStream.getAudioTracks()[0].enabled ? 'Mute' : 'Unmute';
+        } else if (event.target.id === 'endCall') {
+            Object.values(peerConnections).forEach(call => call.close());
+            peerConnections = {};
+        }
+    });
+});
+
     </script>
-    
 </head>
 <body>
-    <div id="videoDiv"></div>
+    <div id="videoContainer">
+        <div id="videoDiv"></div>
+        <div id="controls">
+            <button id="mute">Mute</button>
+            <button id="endCall">End Call</button>
+        </div>
+    </div>
 </body>
 </html>
