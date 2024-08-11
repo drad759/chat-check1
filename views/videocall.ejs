@@ -4,39 +4,74 @@
     <meta charset="utf-8" />
     <title>Video App</title>
     <style>
-        * { margin: 0; }
-        #videoDiv {
-            display: grid;
-            grid-gap: 10px;
-            height: 80%;
-            position: relative;
-            grid-template-columns: repeat(auto-fill, 300px);
-            grid-auto-rows: 300px;
-        }
-        button {
-            height: 30px;
-            width: 80px;
-            margin-top: 10px;
-            text-align: center;
-            border-radius: 10px;
-            outline: none;
-            border: none;
-            background-color: red;
-            cursor: pointer;
-        }
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border: 2px solid white;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body { font-family: Arial, sans-serif; }
+
+#videoContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#mainVideoContainer {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+}
+
+#mainVideo {
+    width: 80vw;
+    height: 80vh;
+    object-fit: cover;
+    border: 2px solid white;
+}
+
+#videoDiv {
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    padding: 10px;
+    overflow: auto;
+    background: #000;
+}
+
+video.secondary {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    border: 2px solid white;
+}
+
+#controls {
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+button {
+    height: 40px;
+    width: 100px;
+    margin: 0 10px;
+    text-align: center;
+    border-radius: 10px;
+    outline: none;
+    border: none;
+    background-color: #ff4d4d;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+
     </style>
     <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js" defer></script>
     <script src="/socket.io/socket.io.js" defer></script>
     <script>
-
-document.addEventListener('DOMContentLoaded', () => {
-    const roomID = '<%= RoomId %>';
+        document.addEventListener('DOMContentLoaded', () => {
+    let roomID = '<%= RoomId %>';
 
     if (!roomID) {
         roomID = prompt('Enter room ID:');
@@ -50,22 +85,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const peer = new Peer();
     let myVideoStream;
     let myId;
+    const mainVideo = document.getElementById('mainVideo');
     const videoGrid = document.getElementById('videoDiv');
-    const myVideo = document.createElement('video');
-    myVideo.muted = true;
-    myVideo.id = 'myVideo';
     const peerConnections = {};
 
-    function addVideo(video, stream) {
+    function addVideo(video, stream, isMain = false) {
         video.srcObject = stream;
         video.addEventListener('loadedmetadata', () => {
             video.play();
         });
-        videoGrid.append(video);
+        if (isMain) {
+            video.classList.remove('secondary');
+            mainVideo.srcObject = stream;
+        } else {
+            video.classList.add('secondary');
+            videoGrid.append(video);
+        }
     }
 
     function switchVideo(video) {
-        const currentVideo = document.querySelector('video.active');
+        mainVideo.srcObject = video.srcObject;
+        const currentVideo = document.querySelector('#videoDiv video.active');
         if (currentVideo) {
             currentVideo.classList.remove('active');
         }
@@ -75,12 +115,12 @@ document.addEventListener('DOMContentLoaded', () => {
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         .then(stream => {
             myVideoStream = stream;
-            addVideo(myVideo, stream);
+            addVideo(mainVideo, stream, true);
 
             peer.on('call', call => {
                 call.answer(stream);
                 const incomingVideo = document.createElement('video');
-                incomingVideo.id = call.peer;
+                incomingVideo.classList.add('secondary');
                 incomingVideo.addEventListener('click', () => switchVideo(incomingVideo));
                 call.on('stream', userStream => {
                     addVideo(incomingVideo, userStream);
@@ -114,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("New user joined: " + id);
         const call = peer.call(id, myVideoStream);
         const incomingVideo = document.createElement('video');
-        incomingVideo.id = id;
+        incomingVideo.classList.add('secondary');
         incomingVideo.addEventListener('click', () => switchVideo(incomingVideo));
         call.on('error', err => {
             console.error('Call error:', err);
@@ -151,6 +191,9 @@ document.addEventListener('DOMContentLoaded', () => {
 </head>
 <body>
     <div id="videoContainer">
+        <div id="mainVideoContainer">
+            <video id="mainVideo" autoplay muted playsinline></video>
+        </div>
         <div id="videoDiv"></div>
         <div id="controls">
             <button id="mute">Mute</button>
