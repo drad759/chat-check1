@@ -2,160 +2,357 @@
 <html lang="en" dir="ltr">
 <head>
     <meta charset="utf-8" />
-    <title>Video App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Video Call App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        background: '#111827',
+                    },
+                    boxShadow: {
+                        'neon': '0 0 5px theme("colors.primary"), 0 0 20px theme("colors.primary")',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
     <style>
-        * { margin: 0; }
-        #videoDiv {
-            display: grid;
-            grid-gap: 10px;
-            height: 80%;
-            position: relative;
-            grid-template-columns: repeat(auto-fill, 300px);
-            grid-auto-rows: 300px;
+        .video-container {
+            perspective: 1000px;
         }
-        button {
-            height: 30px;
-            width: 80px;
-            margin-top: 10px;
-            text-align: center;
-            border-radius: 10px;
-            outline: none;
-            border: none;
-            background-color: red;
-            cursor: pointer;
+        .video-wrapper {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
         }
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border: 2px solid white;
+        .video-wrapper:hover {
+            transform: rotateY(5deg) rotateX(2deg);
+        }
+        .shiny-bg {
+            background: linear-gradient(45deg, #6366F1, #10B981, #F59E0B);
+            background-size: 200% 200%;
+            animation: gradientBG 10s ease infinite;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .blur-bg {
+            backdrop-filter: blur(8px);
         }
     </style>
-    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js" defer></script>
-    <script src="/socket.io/socket.io.js" defer></script>
-    <script>
-
-document.addEventListener('DOMContentLoaded', () => {
-    const roomID = '<%= RoomId %>';
-
-    if (!roomID) {
-        roomID = prompt('Enter room ID:');
-        if (!roomID) {
-            alert('Room ID is required');
-            return;
-        }
-    }
-
-    const socket = io('/');
-    const peer = new Peer();
-    let myVideoStream;
-    let myId;
-    const videoGrid = document.getElementById('videoDiv');
-    const myVideo = document.createElement('video');
-    myVideo.muted = true;
-    myVideo.id = 'myVideo';
-    const peerConnections = {};
-
-    function addVideo(video, stream) {
-        video.srcObject = stream;
-        video.addEventListener('loadedmetadata', () => {
-            video.play();
-        });
-        videoGrid.append(video);
-    }
-
-    function switchVideo(video) {
-        const currentVideo = document.querySelector('video.active');
-        if (currentVideo) {
-            currentVideo.classList.remove('active');
-        }
-        video.classList.add('active');
-    }
-
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then(stream => {
-            myVideoStream = stream;
-            addVideo(myVideo, stream);
-
-            peer.on('call', call => {
-                call.answer(stream);
-                const incomingVideo = document.createElement('video');
-                incomingVideo.id = call.peer;
-                incomingVideo.addEventListener('click', () => switchVideo(incomingVideo));
-                call.on('stream', userStream => {
-                    addVideo(incomingVideo, userStream);
-                });
-                call.on('error', err => {
-                    console.error('Call error:', err);
-                    alert('Call error: ' + err.message);
-                });
-                call.on('close', () => {
-                    incomingVideo.remove();
-                });
-                peerConnections[call.peer] = call;
-            });
-        })
-        .catch(err => {
-            console.error('Media error:', err);
-            alert('Media error: ' + err.message);
-        });
-
-    peer.on('open', id => {
-        myId = id;
-        socket.emit('newUser', id, roomID);
-    });
-
-    peer.on('error', err => {
-        console.error('Peer error:', err);
-        alert('Peer error: ' + err.message);
-    });
-
-    socket.on('userJoined', id => {
-        console.log("New user joined: " + id);
-        const call = peer.call(id, myVideoStream);
-        const incomingVideo = document.createElement('video');
-        incomingVideo.id = id;
-        incomingVideo.addEventListener('click', () => switchVideo(incomingVideo));
-        call.on('error', err => {
-            console.error('Call error:', err);
-            alert('Call error: ' + err.message);
-        });
-        call.on('stream', userStream => {
-            addVideo(incomingVideo, userStream);
-        });
-        call.on('close', () => {
-            incomingVideo.remove();
-            console.log("User disconnected: " + id);
-        });
-        peerConnections[id] = call;
-    });
-
-    socket.on('userDisconnect', id => {
-        if (peerConnections[id]) {
-            peerConnections[id].close();
-        }
-    });
-
-    document.getElementById('controls').addEventListener('click', (event) => {
-        if (event.target.id === 'mute') {
-            myVideoStream.getAudioTracks().forEach(track => track.enabled = !track.enabled);
-            event.target.textContent = myVideoStream.getAudioTracks()[0].enabled ? 'Mute' : 'Unmute';
-        } else if (event.target.id === 'endCall') {
-            Object.values(peerConnections).forEach(call => call.close());
-            peerConnections = {};
-        }
-    });
-});
-
-    </script>
 </head>
-<body>
-    <div id="videoContainer">
-        <div id="videoDiv"></div>
-        <div id="controls">
-            <button id="mute">Mute</button>
-            <button id="endCall">End Call</button>
+<body class="bg-background text-white h-screen flex items-center justify-center overflow-hidden">
+    <div id="videoContainer" class="w-full h-full md:w-11/12 md:h-5/6 md:max-w-6xl bg-gray-800 md:rounded-3xl shadow-2xl flex flex-col overflow-hidden border-4 border-primary shiny-bg">
+        <div class="flex-grow flex flex-col md:flex-row p-2 md:p-4 gap-2 md:gap-4">
+            <div id="mainVideo" class="w-full md:w-3/4 h-[60vh] md:h-full video-container relative">
+                <div id="mainVideoOverlay" class="absolute top-2 left-2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm hidden">
+                    Speaking: <span id="speakingUser"></span>
+                </div>
+            </div>
+            <div id="sideVideos" class="w-full md:w-1/4 h-[30vh] md:h-full flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-y-auto md:overflow-x-hidden">
+                <!-- Other videos will be placed here -->
+            </div>
+        </div>
+        <div id="controls" class="bg-gray-900 p-3 md:p-6 flex flex-wrap justify-center items-center gap-2 md:gap-4">
+            <button id="mute" class="control-btn bg-secondary hover:bg-green-600 text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded-full transition duration-300 ease-in-out flex items-center transform hover:scale-110 hover:shadow-neon">
+                <i class="fas fa-microphone mr-2"></i> Mute
+            </button>
+            <button id="video" class="control-btn bg-secondary hover:bg-green-600 text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded-full transition duration-300 ease-in-out flex items-center transform hover:scale-110 hover:shadow-neon">
+                <i class="fas fa-video mr-2"></i> Video
+            </button>
+            <button id="screenShare" class="control-btn bg-accent hover:bg-yellow-600 text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded-full transition duration-300 ease-in-out flex items-center transform hover:scale-110 hover:shadow-neon">
+                <i class="fas fa-desktop mr-2"></i> Share Screen
+            </button>
+            <button id="endCall" class="control-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded-full transition duration-300 ease-in-out flex items-center transform hover:scale-110 hover:shadow-neon">
+                <i class="fas fa-phone-slash mr-2"></i> End Call
+            </button>
         </div>
     </div>
+
+    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let roomID = '<%= RoomId %>';
+
+        if (!roomID) {
+            roomID = prompt('Enter room ID:');
+            if (!roomID) {
+                alert('Room ID is required');
+                return;
+            }
+        }
+
+        const socket = io('/');
+        const peer = new Peer();
+        let myVideoStream;
+        let myId;
+        const mainVideoContainer = document.getElementById('mainVideo');
+        const sideVideosContainer = document.getElementById('sideVideos');
+        const peerConnections = {};
+        let screenShareStream = null;
+
+        function createVideoElement(isMainVideo = false) {
+            const videoWrapper = document.createElement('div');
+            videoWrapper.className = isMainVideo 
+                ? 'relative video-wrapper w-full h-full'
+                : 'relative video-wrapper w-32 h-24 md:w-full md:h-32 cursor-pointer';
+
+            const video = document.createElement('video');
+            video.className = 'w-full h-full object-cover rounded-lg transition-all duration-300 ease-in-out';
+            
+            videoWrapper.appendChild(video);
+
+            const label = document.createElement('div');
+            label.className = 'absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm';
+            videoWrapper.appendChild(label);
+
+            const muteIcon = document.createElement('i');
+            muteIcon.className = 'fas fa-microphone-slash absolute top-2 right-2 text-red-500 hidden';
+            videoWrapper.appendChild(muteIcon);
+
+            return { videoWrapper, video, label, muteIcon };
+        }
+
+        function addVideo(stream, isLocal = false, userId = null) {
+            // Remove existing video element if it already exists
+            if (userId && !isLocal) {
+                const existingVideo = document.querySelector(`video[data-user-id="${userId}"]`);
+                if (existingVideo) {
+                    existingVideo.parentElement.remove();
+                }
+            }
+
+            const { videoWrapper, video, label, muteIcon } = createVideoElement(!isLocal);
+            video.srcObject = stream;
+            video.addEventListener('loadedmetadata', () => {
+                video.play();
+            });
+
+            label.textContent = isLocal ? 'You' : 'Peer';
+            if (userId) {
+                video.setAttribute('data-user-id', userId);
+            }
+
+            if (isLocal) {
+                mainVideoContainer.innerHTML = ''; // Clear any existing local video
+                mainVideoContainer.appendChild(videoWrapper);
+            } else {
+                sideVideosContainer.appendChild(videoWrapper);
+                videoWrapper.addEventListener('click', () => switchMainVideo(video));
+            }
+
+            return { video, muteIcon };
+        }
+
+        function switchMainVideo(clickedVideo) {
+            const mainVideo = mainVideoContainer.querySelector('video');
+            if (mainVideo === clickedVideo) return;
+
+            const clickedWrapper = clickedVideo.parentElement;
+            const mainWrapper = mainVideo.parentElement;
+
+            mainVideoContainer.innerHTML = ''; // Clear current main video
+            sideVideosContainer.appendChild(mainWrapper);
+
+            mainVideoContainer.appendChild(clickedWrapper);
+
+            clickedWrapper.className = 'relative video-wrapper w-full h-full';
+            mainWrapper.className = 'relative video-wrapper w-32 h-24 md:w-full md:h-32 cursor-pointer';
+
+            mainWrapper.addEventListener('click', () => switchMainVideo(mainVideo));
+        }
+
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then(stream => {
+                myVideoStream = stream;
+                const { video, muteIcon } = addVideo(stream, true);
+
+                const audioContext = new AudioContext();
+                const analyser = audioContext.createAnalyser();
+                const microphone = audioContext.createMediaStreamSource(stream);
+                const scriptProcessor = audioContext.createScriptProcessor(2048, 1, 1);
+
+                analyser.smoothingTimeConstant = 0.8;
+                analyser.fftSize = 1024;
+
+                microphone.connect(analyser);
+                analyser.connect(scriptProcessor);
+                scriptProcessor.connect(audioContext.destination);
+                scriptProcessor.onaudioprocess = function() {
+                    const array = new Uint8Array(analyser.frequencyBinCount);
+                    analyser.getByteFrequencyData(array);
+                    const arraySum = array.reduce((a, value) => a + value, 0);
+                    const average = arraySum / array.length;
+                    if(average > 20) {
+                        socket.emit('speaking', { roomId: roomID, userId: myId });
+                    } else {
+                        socket.emit('stoppedSpeaking', { roomId: roomID, userId: myId });
+                    }
+                };
+
+                peer.on('call', call => {
+                    call.answer(stream);
+                    call.on('stream', userStream => {
+                        addVideo(userStream, false, call.peer);
+                    });
+                    call.on('error', err => {
+                        console.error('Call error:', err);
+                        alert('Call error: ' + err.message);
+                    });
+                    call.on('close', () => {
+                        const video = document.querySelector(`video[data-user-id="${call.peer}"]`);
+                        if (video) video.parentElement.remove();
+                    });
+                    peerConnections[call.peer] = call;
+                });
+            })
+            .catch(err => {
+                console.error('Media error:', err);
+                alert('Media error: ' + err.message);
+            });
+
+        peer.on('open', id => {
+            myId = id;
+            socket.emit('newUser', id, roomID);
+        });
+
+        peer.on('error', err => {
+            console.error('Peer error:', err);
+            alert('Peer error: ' + err.message);
+        });
+
+        socket.on('userJoined', id => {
+            console.log("New user joined: " + id);
+            const call = peer.call(id, myVideoStream);
+            call.on('stream', userStream => {
+                addVideo(userStream, false, id);
+            });
+            call.on('error', err => {
+                console.error('Call error:', err);
+                alert('Call error: ' + err.message);
+            });
+            call.on('close', () => {
+                const video = document.querySelector(`video[data-user-id="${id}"]`);
+                if (video) video.parentElement.remove();
+                console.log("User disconnected: " + id);
+            });
+            peerConnections[id] = call;
+        });
+
+        socket.on('userDisconnect', id => {
+            if (peerConnections[id]) {
+                peerConnections[id].close();
+                delete peerConnections[id];
+            }
+        });
+
+        socket.on('speaking', ({ userId }) => {
+            const speakingUser = document.querySelector(`video[data-user-id="${userId}"]`);
+            if (speakingUser) {
+                document.getElementById('speakingUser').textContent = userId === myId ? 'You' : 'Peer';
+                document.getElementById('mainVideoOverlay').classList.remove('hidden');
+                switchMainVideo(speakingUser);
+            }
+        });
+
+        socket.on('stoppedSpeaking', () => {
+            document.getElementById('mainVideoOverlay').classList.add('hidden');
+        });
+
+        document.getElementById('controls').addEventListener('click', (event) => {
+            const target = event.target.closest('button');
+            if (!target) return;
+
+            switch(target.id) {
+                case 'mute':
+                    const muteButton = document.getElementById('mute');
+                    myVideoStream.getAudioTracks().forEach(track => track.enabled = !track.enabled);
+                    muteButton.innerHTML = myVideoStream.getAudioTracks()[0].enabled ? 
+                        '<i class="fas fa-microphone mr-2"></i> Mute' : 
+                        '<i class="fas fa-microphone-slash mr-2"></i> Unmute';
+                    muteButton.classList.toggle('bg-secondary');
+                    muteButton.classList.toggle('bg-red-500');
+                    socket.emit('toggleAudio', { roomId: roomID, userId: myId, muted: !myVideoStream.getAudioTracks()[0].enabled });
+                    break;
+                case 'video':
+                    const videoButton = document.getElementById('video');
+                    myVideoStream.getVideoTracks().forEach(track => track.enabled = !track.enabled);
+                    videoButton.innerHTML = myVideoStream.getVideoTracks()[0].enabled ? 
+                        '<i class="fas fa-video mr-2"></i> Video' : 
+                        '<i class="fas fa-video-slash mr-2"></i> Video Off';
+                    videoButton.classList.toggle('bg-secondary');
+                    videoButton.classList.toggle('bg-red-500');
+                    break;
+                case 'screenShare':
+                    if (!screenShareStream) {
+                        navigator.mediaDevices.getDisplayMedia({ cursor: true }).then(stream => {
+                            screenShareStream = stream;
+                            const videoTrack = screenShareStream.getVideoTracks()[0];
+                            Object.values(peerConnections).forEach(peerConnection => {
+                                const sender = peerConnection.peerConnection.getSenders().find(s => s.track.kind === videoTrack.kind);
+                                if (sender) {
+                                    sender.replaceTrack(videoTrack);
+                                }
+                            });
+                            videoTrack.onended = () => {
+                                stopScreenSharing();
+                            };
+                            target.innerHTML = '<i class="fas fa-desktop mr-2"></i> Stop Sharing';
+                            target.classList.remove('bg-accent');
+                            target.classList.add('bg-red-500');
+                        }).catch(err => {
+                            console.error("Error: " + err);
+                        });
+                    } else {
+                        stopScreenSharing();
+                    }
+                    break;
+                case 'endCall':
+                    Object.values(peerConnections).forEach(call => call.close());
+                    peerConnections = {};
+                    window.location.href = '/';
+                    break;
+            }
+        });
+
+        function stopScreenSharing() {
+            if (!screenShareStream) return;
+            const videoTrack = myVideoStream.getVideoTracks()[0];
+            Object.values(peerConnections).forEach(peerConnection => {
+                const sender = peerConnection.peerConnection.getSenders().find(s => s.track.kind === videoTrack.kind);
+                if (sender) {
+                    sender.replaceTrack(videoTrack);
+                }
+            });
+            screenShareStream.getTracks().forEach(track => track.stop());
+            screenShareStream = null;
+            const screenShareButton = document.getElementById('screenShare');
+            screenShareButton.innerHTML = '<i class="fas fa-desktop mr-2"></i> Share Screen';
+            screenShareButton.classList.remove('bg-red-500');
+            screenShareButton.classList.add('bg-accent');
+        }
+
+        socket.on('toggleAudio', ({ userId, muted }) => {
+            const userVideo = document.querySelector(`video[data-user-id="${userId}"]`);
+            if (userVideo) {
+                const muteIcon = userVideo.parentElement.querySelector('.fa-microphone-slash');
+                if (muted) {
+                    muteIcon.classList.remove('hidden');
+                } else {
+                    muteIcon.classList.add('hidden');
+                }
+            }
+        });
+    });
+    </script>
 </body>
 </html>
