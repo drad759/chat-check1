@@ -15,6 +15,7 @@
     "express": "^4.19.2",
     "netlify-cli": "^12.7.2",
     "netlify-lambda":"^2.0.15",
+    "serverless-http":"^2.7.0",
     "express-session": "^1.18.0",
     "gridfs-stream": "^1.1.1",
     "mongoose": "^8.5.2",
